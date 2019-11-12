@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func Tailf(filePath string) (<-chan string, error) {
+func TailF(filePath string) (<-chan string, error) {
 	buffer := make([]byte, 4096)
 	ch := make(chan string)
 
@@ -19,7 +19,11 @@ func Tailf(filePath string) (<-chan string, error) {
 		for {
 			bytesRead, _ := fp.Read(buffer)
 			if bytesRead > 0 {
-				for _, line := range strings.Split(string(buffer[:bytesRead]), "\n") {
+				contentBuffer := buffer[:bytesRead]
+				if contentBuffer[bytesRead-1] == byte('\n') {
+					contentBuffer = contentBuffer[:bytesRead-1]
+				}
+				for _, line := range strings.Split(string(contentBuffer), "\n") {
 					ch <- line
 				}
 			} else {

@@ -10,11 +10,11 @@ import (
 func main() {
 	filePath := os.Args[1]
 
-	ch, err := tailer.Tailf(filePath)
+	ch, err := tailer.ReadF(filePath)
 	if err != nil {
 		panic(err)
 	}
 	for line := range ch {
-		fmt.Println(line)
+		fmt.Println("line", line)
 	}
 }
