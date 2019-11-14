@@ -34,17 +34,21 @@ func ReadF(filePath string) (<-chan string, error) {
 	}
 
 	go func() {
+		defer fp.Close()
 		for {
 			bytesRead, seekBack, err := readMessages(fp, buffer)
 			if err == io.EOF {
-				close(ch)
-				return
+				time.Sleep(100 * time.Millisecond)
+				continue
+			}
+			if err != nil {
+				fp.Close()
+				panic(err)
 			}
 			fp.Seek(-int64(seekBack), 1)
 			for _, message := range bytes.Split(buffer[:bytesRead], []byte{'\n'}) {
 				ch <- string(message)
 			}
-			time.Sleep(5 * time.Second)
 		}
 	}()
 

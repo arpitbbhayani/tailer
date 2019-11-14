@@ -14,6 +14,7 @@ func TailF(filePath string) (<-chan string, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer fp.Close()
 
 	go func() {
 		for {
