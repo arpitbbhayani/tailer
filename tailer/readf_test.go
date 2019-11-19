@@ -57,15 +57,22 @@ func verifyReadLines(ch <-chan string, actualLines []string, t *testing.T) {
 type ReadFTesting struct {
 	t        *testing.T
 	filepath string
+	fp       *os.File
 }
 
 func (t *ReadFTesting) Init() {
 	t.filepath = "./temp.txt"
 	createFile(t.filepath)
+	fp, err := os.OpenFile(t.filepath, os.O_CREATE|os.O_APPEND|os.O_WRONLY|os.O_SYNC, 0644)
+	if err != nil {
+		panic(err)
+	}
+	t.fp = fp
 }
 
 func (t *ReadFTesting) End() {
 	deleteFile(t.filepath)
+	t.fp.Close()
 }
 
 func (t *ReadFTesting) Test(actualLinesData []string, readFConfig ReadFConfig) {
@@ -79,7 +86,7 @@ func (t *ReadFTesting) Test(actualLinesData []string, readFConfig ReadFConfig) {
 	}()
 
 	go func() {
-		WriteF(t.filepath, actualLines)
+		WriteF(t.fp, actualLines)
 	}()
 
 	observedLines, err := ReadF(t.filepath, readFConfig)
