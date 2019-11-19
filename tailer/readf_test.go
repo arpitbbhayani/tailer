@@ -54,19 +54,22 @@ func verifyReadLines(ch <-chan string, actualLines []string, t *testing.T) {
 	}
 }
 
-func TestFixedWidthContent(t *testing.T) {
-	filepath := "./temp.txt"
-	createFile(filepath)
-	defer deleteFile(filepath)
+type ReadFTesting struct {
+	t        *testing.T
+	filepath string
+}
 
-	totalActualLines := 100
+func (t *ReadFTesting) Init() {
+	t.filepath = "./temp.txt"
+	createFile(t.filepath)
+}
+
+func (t *ReadFTesting) End() {
+	deleteFile(t.filepath)
+}
+
+func (t *ReadFTesting) Test(actualLinesData []string, readFConfig ReadFConfig) {
 	actualLines := make(chan string)
-	actualLinesData := make([]string, 0, totalActualLines)
-
-	for i := 0; i < totalActualLines; i++ {
-		actualLinesData = append(actualLinesData, randomString(10))
-	}
-
 	go func() {
 		for _, actualLine := range actualLinesData {
 			actualLines <- actualLine
@@ -76,15 +79,63 @@ func TestFixedWidthContent(t *testing.T) {
 	}()
 
 	go func() {
-		WriteF(filepath, actualLines)
+		WriteF(t.filepath, actualLines)
 	}()
 
-	observedLines, err := ReadF(filepath, ReadFConfig{
-		SizePerMessageInBytes: 10,
-		MaxMessagesInBuffer:   10,
-	})
+	observedLines, err := ReadF(t.filepath, readFConfig)
 	if err != nil {
 		panic(err)
 	}
-	verifyReadLines(observedLines, actualLinesData, t)
+	verifyReadLines(observedLines, actualLinesData, t.t)
+}
+
+func TestFixedWidthFullContent(t *testing.T) {
+	rt := &ReadFTesting{}
+	rt.Init()
+	defer rt.End()
+
+	totalActualLines := 100
+	actualLinesData := make([]string, 0, totalActualLines)
+	for i := 0; i < totalActualLines; i++ {
+		actualLinesData = append(actualLinesData, randomString(10))
+	}
+
+	rt.Test(actualLinesData, ReadFConfig{
+		SizePerMessageInBytes: 10,
+		MaxMessagesInBuffer:   10,
+	})
+}
+
+func TestFixedWidthHalfContent(t *testing.T) {
+	rt := &ReadFTesting{}
+	rt.Init()
+	defer rt.End()
+
+	totalActualLines := 100
+	actualLinesData := make([]string, 0, totalActualLines)
+	for i := 0; i < totalActualLines; i++ {
+		actualLinesData = append(actualLinesData, randomString(5))
+	}
+
+	rt.Test(actualLinesData, ReadFConfig{
+		SizePerMessageInBytes: 10,
+		MaxMessagesInBuffer:   10,
+	})
+}
+
+func TestFixedWidthRandomContent(t *testing.T) {
+	rt := &ReadFTesting{}
+	rt.Init()
+	defer rt.End()
+
+	totalActualLines := 100
+	actualLinesData := make([]string, 0, totalActualLines)
+	for i := 0; i < totalActualLines; i++ {
+		actualLinesData = append(actualLinesData, randomString(rand.Intn(10)))
+	}
+
+	rt.Test(actualLinesData, ReadFConfig{
+		SizePerMessageInBytes: 10,
+		MaxMessagesInBuffer:   10,
+	})
 }
