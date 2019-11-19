@@ -19,11 +19,16 @@ func readMessages(fp *os.File, buf []byte) (int, int, error) {
 	return index, (bytesRead - 1) - index, nil
 }
 
+type ReadFConfig struct {
+	SizePerMessageInBytes int
+	MaxMessagesInBuffer   int
+}
+
 // ReadF Reads messages from a ReadOnly file separated by \n
 // Reads at max 100 messages and keeps it available in buffer
 // to fast fanout.
-func ReadF(filePath string) (<-chan string, error) {
-	sizePerMessageInBytes, maxMessages := 10+1, 5
+func ReadF(filePath string, config ReadFConfig) (<-chan string, error) {
+	sizePerMessageInBytes, maxMessages := config.SizePerMessageInBytes+1, config.MaxMessagesInBuffer
 
 	ch := make(chan string, maxMessages)
 	buffer := make([]byte, sizePerMessageInBytes*maxMessages)

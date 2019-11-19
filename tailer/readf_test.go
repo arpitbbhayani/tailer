@@ -40,11 +40,17 @@ func deleteFile(filepath string) {
 }
 
 func verifyReadLines(ch <-chan string, actualLines []string, t *testing.T) {
+	linesVerified := 0
 	for _, actualLine := range actualLines {
 		observedLine := <-ch
 		if observedLine != actualLine {
 			t.Error("observed and actual lines do not match", observedLine, actualLine)
+		} else {
+			linesVerified++
 		}
+	}
+	if linesVerified != len(actualLines) {
+		t.Error("number of lines verified is", linesVerified, "but total lines to be verified were", len(actualLines))
 	}
 }
 
@@ -53,10 +59,9 @@ func TestFixedWidthContent(t *testing.T) {
 	createFile(filepath)
 	defer deleteFile(filepath)
 
-	totalActualLines := 1000
+	totalActualLines := 100
 	actualLines := make(chan string)
 	actualLinesData := make([]string, 0, totalActualLines)
-	done := make(chan bool)
 
 	for i := 0; i < totalActualLines; i++ {
 		actualLinesData = append(actualLinesData, randomString(10))
@@ -72,15 +77,14 @@ func TestFixedWidthContent(t *testing.T) {
 
 	go func() {
 		WriteF(filepath, actualLines)
-		done <- true
 	}()
 
-	time.Sleep(2 * time.Millisecond)
-	observedLines, err := ReadF(filepath)
+	observedLines, err := ReadF(filepath, ReadFConfig{
+		SizePerMessageInBytes: 10,
+		MaxMessagesInBuffer:   10,
+	})
 	if err != nil {
 		panic(err)
 	}
 	verifyReadLines(observedLines, actualLinesData, t)
-
-	<-done
 }
