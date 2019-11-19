@@ -1,13 +1,13 @@
 # Tailer
----
-This packages shows
 
- - how to `tail -f` as file
+This packages does
+
+ - `tail -f`
+ - `tail -f` line-wise
 
 Not to be used in production.
 
 _For education purpose only_
-
 
 ## Running tests
 
