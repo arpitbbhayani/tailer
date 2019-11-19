@@ -12,5 +12,5 @@ _For education purpose only_
 ## Running tests
 
 ```
-go test github.com/arpitbbhayani/tailer/tailer -run *
+go test github.com/arpitbbhayani/tailer -run *
 ```
